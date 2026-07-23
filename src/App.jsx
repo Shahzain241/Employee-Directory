@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import EmployeeDetails from './pages/EmployeeDetails'
+import { toggleFavoriteId } from './utils/employeeUtils'
+
+function getSavedFavorites() {
+  try {
+    const saved = window.localStorage.getItem('employee-favorites')
+    const parsed = saved ? JSON.parse(saved) : []
+
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
 
 function App() {
   const [theme, setTheme] = useState(() => {
@@ -16,8 +28,7 @@ function App() {
   const [favorites, setFavorites] = useState(() => {
     if (typeof window === 'undefined') return []
 
-    const savedFavorites = window.localStorage.getItem('employee-favorites')
-    return savedFavorites ? JSON.parse(savedFavorites) : []
+    return getSavedFavorites()
   })
 
   useEffect(() => {
@@ -36,11 +47,7 @@ function App() {
   function toggleFavorite(id) {
     const numericId = Number(id)
 
-    setFavorites((currentFavorites) =>
-      currentFavorites.includes(numericId)
-        ? currentFavorites.filter((favoriteId) => favoriteId !== numericId)
-        : [...currentFavorites, numericId]
-    )
+    setFavorites((currentFavorites) => toggleFavoriteId(currentFavorites, numericId))
   }
 
   return (

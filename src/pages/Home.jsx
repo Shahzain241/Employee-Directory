@@ -4,6 +4,7 @@ import EmployeeList from '../components/EmployeeList'
 import Loader from '../components/Loader'
 import Error from '../components/Error'
 import { getEmployees } from '../services/api'
+import { getFilteredEmployees, getPaginatedEmployees, getSortedEmployees } from '../utils/employeeUtils'
 
 const EMPLOYEES_PER_PAGE = 10
 
@@ -15,18 +16,28 @@ function Home({ theme, toggleTheme, favorites, onToggleFavorite }) {
   const [sortOrder, setSortOrder] = useState('asc')
   const [currentPage, setCurrentPage] = useState(1)
 
-  function fetchEmployees() {
+  async function fetchEmployees(signal) {
     setLoading(true)
     setError(null)
 
-    getEmployees()
-      .then((data) => setEmployees(data))
-      .catch(() => setError('Could not load employees. Please try again.'))
-      .finally(() => setLoading(false))
+    try {
+      const data = await getEmployees(signal)
+      setEmployees(data)
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      console.error('Employee request failed:', error)
+      setError('Could not load employees. Please try again.')
+    } finally {
+      if (!signal?.aborted) setLoading(false)
+    }
   }
 
   useEffect(() => {
-    fetchEmployees()
+    const controller = new AbortController()
+    fetchEmployees(controller.signal)
+
+    return () => controller.abort()
   }, [])
 
   useEffect(() => {
@@ -34,37 +45,15 @@ function Home({ theme, toggleTheme, favorites, onToggleFavorite }) {
   }, [search, sortOrder])
 
   const filteredEmployees = useMemo(() => {
-    const searchTerm = search.toLowerCase()
-
-    return employees.filter((employee) => {
-      const fullName = `${employee.firstName} ${employee.lastName}`.toLowerCase()
-      return (
-        fullName.includes(searchTerm) ||
-        employee.email.toLowerCase().includes(searchTerm)
-      )
-    })
+    return getFilteredEmployees(employees, search)
   }, [employees, search])
 
   const sortedEmployees = useMemo(() => {
-    const sorted = [...filteredEmployees]
-
-    sorted.sort((a, b) => {
-      const nameA = `${a.firstName} ${a.lastName}`.toLowerCase()
-      const nameB = `${b.firstName} ${b.lastName}`.toLowerCase()
-
-      return sortOrder === 'asc'
-        ? nameA.localeCompare(nameB)
-        : nameB.localeCompare(nameA)
-    })
-
-    return sorted
+    return getSortedEmployees(filteredEmployees, sortOrder)
   }, [filteredEmployees, sortOrder])
 
   const totalPages = Math.max(1, Math.ceil(sortedEmployees.length / EMPLOYEES_PER_PAGE))
-  const visibleEmployees = sortedEmployees.slice(
-    (currentPage - 1) * EMPLOYEES_PER_PAGE,
-    currentPage * EMPLOYEES_PER_PAGE
-  )
+  const visibleEmployees = getPaginatedEmployees(sortedEmployees, currentPage, EMPLOYEES_PER_PAGE)
 
   useEffect(() => {
     if (currentPage > totalPages) {

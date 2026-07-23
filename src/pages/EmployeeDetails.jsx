@@ -10,18 +10,28 @@ function EmployeeDetails({ theme, toggleTheme, favorites, onToggleFavorite }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
-  function fetchEmployee() {
+  async function fetchEmployee(signal) {
     setLoading(true)
     setError(null)
 
-    getEmployeeById(id)
-      .then((data) => setEmployee(data))
-      .catch(() => setError('Could not load employee details. Please try again.'))
-      .finally(() => setLoading(false))
+    try {
+      const data = await getEmployeeById(id, signal)
+      setEmployee(data)
+    } catch (error) {
+      if (error?.name === 'AbortError') return
+
+      console.error('Employee details request failed:', error)
+      setError('Could not load employee details. Please try again.')
+    } finally {
+      if (!signal?.aborted) setLoading(false)
+    }
   }
 
   useEffect(() => {
-    fetchEmployee()
+    const controller = new AbortController()
+    fetchEmployee(controller.signal)
+
+    return () => controller.abort()
   }, [id])
 
   if (loading) return <Loader />
@@ -40,13 +50,21 @@ function EmployeeDetails({ theme, toggleTheme, favorites, onToggleFavorite }) {
       </div>
 
       <div className="details-card">
-        <img src={employee.image} alt={employee.firstName} className="avatar-large" />
+        <img
+          src={employee.image}
+          alt={employee.firstName}
+          className="avatar-large"
+          loading="lazy"
+          width="160"
+          height="160"
+        />
         <h2>{employee.firstName} {employee.lastName}</h2>
 
         <button
           type="button"
           className={`favorite-btn ${isFavorite ? 'active' : ''}`}
           onClick={() => onToggleFavorite(employee.id)}
+          aria-label={`${isFavorite ? 'Remove' : 'Add'} ${employee.firstName} from favorites`}
         >
           {isFavorite ? '★ Favorite' : '☆ Favorite'}
         </button>
