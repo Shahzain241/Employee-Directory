@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Employee details screen</title>
+  <desc id="desc">A preview of an employee details page with profile information and actions.</desc>
+  <rect width="1200" height="760" fill="#f5f6fa"/>
+  <rect width="1200" height="72" fill="#ffffff" stroke="#e0e0e0"/>
+  <text x="40" y="45" fill="#333333" font-family="Arial, sans-serif" font-size="24" font-weight="700">Employee Directory</text>
+  <text x="860" y="43" fill="#666666" font-family="Arial, sans-serif" font-size="16">Home</text>
+  <text x="930" y="43" fill="#666666" font-family="Arial, sans-serif" font-size="16">Favorites</text>
+  <text x="1030" y="43" fill="#666666" font-family="Arial, sans-serif" font-size="16">Add Employee</text>
+  <rect x="180" y="120" width="840" height="520" rx="10" fill="#ffffff" stroke="#e0e0e0"/>
+  <circle cx="600" cy="245" r="82" fill="#d9e7fb"/>
+  <text x="600" y="375" text-anchor="middle" fill="#333333" font-family="Arial, sans-serif" font-size="30" font-weight="700">Emily Johnson</text>
+  <text x="600" y="408" text-anchor="middle" fill="#666666" font-family="Arial, sans-serif" font-size="18">Marketing Specialist</text>
+  <line x1="300" y1="450" x2="900" y2="450" stroke="#e0e0e0"/>
+  <text x="320" y="492" fill="#666666" font-family="Arial, sans-serif" font-size="16">Email</text><text x="600" y="492" fill="#333333" font-family="Arial, sans-serif" font-size="16">emily.johnson@example.com</text>
+  <text x="320" y="535" fill="#666666" font-family="Arial, sans-serif" font-size="16">Department</text><text x="600" y="535" fill="#333333" font-family="Arial, sans-serif" font-size="16">Marketing</text>
+  <text x="320" y="578" fill="#666666" font-family="Arial, sans-serif" font-size="16">Location</text><text x="600" y="578" fill="#333333" font-family="Arial, sans-serif" font-size="16">New York</text>
+</svg>

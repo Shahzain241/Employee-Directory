@@ -4,16 +4,12 @@ A React application that displays employees fetched from https://dummyjson.com/u
 
 ## Live Demo
 
-Add your deployed URL here once published, for example:
-
-[View Employee Directory](https://your-app-name.vercel.app)
+[View Employee Directory](https://employee-directory-puce-five.vercel.app)
 
 ## Screenshots
 
-Add screenshots to a `screenshots` folder in the project root, then reference them here:
-
-![Employee Directory Home](./screenshots/home.png)
-![Employee Details](./screenshots/details.png)
+![Employee Directory Home](./screenshots/home.svg)
+![Employee Details](./screenshots/details.svg)
 
 ## Technology Stack
 
