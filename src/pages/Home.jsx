@@ -1,144 +1,150 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import SearchBar from '../components/SearchBar'
+import EmployeeFilters from '../components/EmployeeFilters'
 import EmployeeList from '../components/EmployeeList'
+import Statistics from '../components/Statistics'
+import Pagination from '../components/Pagination'
 import Loader from '../components/Loader'
-import Error from '../components/Error'
-import { getEmployees } from '../services/api'
-import { getFilteredEmployees, getPaginatedEmployees, getSortedEmployees } from '../utils/employeeUtils'
+import ErrorMessage from '../components/ErrorMessage'
+import ConfirmationModal from '../components/ConfirmationModal'
+import { useEmployees } from '../hooks/useEmployees'
+import { useFavorites } from '../hooks/useFavorites'
+import { useDebounce } from '../hooks/useDebounce'
+import { useLocalStorage } from '../hooks/useLocalStorage'
+import {
+  filterEmployees,
+  sortEmployees,
+  getUniqueDepartments,
+  getUniqueCities,
+  calculateStatistics,
+} from '../utils/employeeHelpers'
+import { exportEmployeesToCsv } from '../utils/csvExport'
 
-const EMPLOYEES_PER_PAGE = 10
+function Home() {
+  const { employees, loading, error, retry, deleteEmployee } = useEmployees()
+  const { favoriteIds, toggleFavorite } = useFavorites()
 
-function Home({ theme, toggleTheme, favorites, onToggleFavorite }) {
-  const [employees, setEmployees] = useState([])
   const [search, setSearch] = useState('')
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [sortOrder, setSortOrder] = useState('asc')
-  const [currentPage, setCurrentPage] = useState(1)
+  const debouncedSearch = useDebounce(search, 400)
 
-  async function fetchEmployees(signal) {
-    setLoading(true)
-    setError(null)
+  const [department, setDepartment] = useState('All')
+  const [city, setCity] = useState('All')
+  const [sortOrder, setSortOrder] = useState('A-Z')
+  const [view, setView] = useLocalStorage('employee-directory-view', 'grid')
 
-    try {
-      const data = await getEmployees(signal)
-      setEmployees(data)
-    } catch (error) {
-      if (error?.name === 'AbortError') return
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
-      console.error('Employee request failed:', error)
-      setError('Could not load employees. Please try again.')
-    } finally {
-      if (!signal?.aborted) setLoading(false)
-    }
+  const [employeeToDelete, setEmployeeToDelete] = useState(null)
+
+  const departments = useMemo(() => getUniqueDepartments(employees), [employees])
+  const cities = useMemo(() => getUniqueCities(employees), [employees])
+
+  const filteredEmployees = useMemo(
+    () => filterEmployees(employees, { search: debouncedSearch, department, city }),
+    [employees, debouncedSearch, department, city]
+  )
+
+  const sortedEmployees = useMemo(
+    () => sortEmployees(filteredEmployees, sortOrder),
+    [filteredEmployees, sortOrder]
+  )
+
+  const stats = useMemo(
+    () => calculateStatistics(filteredEmployees, favoriteIds),
+    [filteredEmployees, favoriteIds]
+  )
+
+  const totalPages = Math.max(1, Math.ceil(sortedEmployees.length / pageSize))
+  const currentPage = Math.min(page, totalPages)
+
+  const paginatedEmployees = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return sortedEmployees.slice(start, start + pageSize)
+  }, [sortedEmployees, currentPage, pageSize])
+
+  function handleDepartmentChange(value) {
+    setDepartment(value)
+    setPage(1)
   }
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchEmployees(controller.signal)
+  function handleCityChange(value) {
+    setCity(value)
+    setPage(1)
+  }
 
-    return () => controller.abort()
-  }, [])
+  function handlePageSizeChange(value) {
+    setPageSize(value)
+    setPage(1)
+  }
 
-  useEffect(() => {
-    setCurrentPage(1)
-  }, [search, sortOrder])
-
-  const filteredEmployees = useMemo(() => {
-    return getFilteredEmployees(employees, search)
-  }, [employees, search])
-
-  const sortedEmployees = useMemo(() => {
-    return getSortedEmployees(filteredEmployees, sortOrder)
-  }, [filteredEmployees, sortOrder])
-
-  const totalPages = Math.max(1, Math.ceil(sortedEmployees.length / EMPLOYEES_PER_PAGE))
-  const visibleEmployees = getPaginatedEmployees(sortedEmployees, currentPage, EMPLOYEES_PER_PAGE)
-
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages)
-    }
-  }, [currentPage, totalPages])
+  function handleConfirmDelete() {
+    deleteEmployee(employeeToDelete.id)
+    setEmployeeToDelete(null)
+  }
 
   return (
     <div className="home">
       <div className="home-header">
-        <div>
-          <h1>Employee Directory</h1>
-          <p className="subtitle">Browse your team smoothly from desktop, tablet, or mobile.</p>
-        </div>
-
-        <div className="home-actions">
-          <div className="results-summary">
-            {search
-              ? `${filteredEmployees.length} result${filteredEmployees.length === 1 ? '' : 's'}`
-              : `${employees.length} employees`}
-          </div>
-          <button type="button" className="theme-toggle" onClick={toggleTheme}>
-            {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
-          </button>
-        </div>
-      </div>
-
-      <div className="controls-bar">
-        <label className="sort-control">
-          <span>Sort</span>
-          <select value={sortOrder} onChange={(event) => setSortOrder(event.target.value)}>
-            <option value="asc">A-Z</option>
-            <option value="desc">Z-A</option>
-          </select>
-        </label>
-
-        <div className="favorites-count">
-          ★ {favorites.length} favorite{favorites.length === 1 ? '' : 's'}
-        </div>
+        <h1>Employee Directory</h1>
+        <button type="button" onClick={() => exportEmployeesToCsv(sortedEmployees)}>
+          Export CSV
+        </button>
       </div>
 
       <SearchBar value={search} onChange={setSearch} />
 
+      {!loading && !error && (
+        <EmployeeFilters
+          departments={departments}
+          cities={cities}
+          department={department}
+          city={city}
+          sortOrder={sortOrder}
+          view={view}
+          onDepartmentChange={handleDepartmentChange}
+          onCityChange={handleCityChange}
+          onSortChange={setSortOrder}
+          onViewChange={setView}
+        />
+      )}
+
       {loading && <Loader />}
-      {!loading && error && <Error message={error} onRetry={fetchEmployees} />}
+      {!loading && error && <ErrorMessage message={error} onRetry={retry} />}
+
       {!loading && !error && (
         <>
+          <Statistics stats={stats} />
+
           <EmployeeList
-            employees={visibleEmployees}
-            favorites={favorites}
-            onToggleFavorite={onToggleFavorite}
+            employees={paginatedEmployees}
+            favoriteIds={favoriteIds}
+            onToggleFavorite={toggleFavorite}
+            onDelete={setEmployeeToDelete}
+            view={view}
           />
 
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.max(page - 1, 1))}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-
-              {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  className={`page-number ${currentPage === page ? 'active' : ''}`}
-                  onClick={() => setCurrentPage(page)}
-                >
-                  {page}
-                </button>
-              ))}
-
-              <button
-                type="button"
-                onClick={() => setCurrentPage((page) => Math.min(page + 1, totalPages))}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </button>
-            </div>
-          )}
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={handlePageSizeChange}
+          />
         </>
       )}
+
+      <ConfirmationModal
+        isOpen={Boolean(employeeToDelete)}
+        title="Delete Employee"
+        message={
+          employeeToDelete
+            ? `Are you sure you want to delete ${employeeToDelete.firstName} ${employeeToDelete.lastName}?`
+            : ''
+        }
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setEmployeeToDelete(null)}
+      />
     </div>
   )
 }

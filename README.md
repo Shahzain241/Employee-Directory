@@ -1,95 +1,138 @@
 # Employee Directory
 
-A responsive React application that displays employee data from the [DummyJSON users API](https://dummyjson.com/users). It supports searching, sorting, pagination, favorites saved in local storage, dark/light themes, and employee detail routes.
+A React application that displays employees fetched from https://dummyjson.com/users, with search, filters, sorting, favorites, pagination, and local add/edit/delete support.
 
 ## Live Demo
 
-This checkout does not include a public deployment URL. Run `npm run dev` to use the local application at the URL shown by Vite. When deployed, replace this section with the public URL, for example:
+Add your deployed URL here once published, for example:
 
-`[View Employee Directory](https://your-public-deployment-url.example)`
+[View Employee Directory](https://your-app-name.vercel.app)
 
 ## Screenshots
 
-Screenshot files were not included in this checkout. Add the captured images to `screenshots/home.png` and `screenshots/details.png`, then use:
+Add screenshots to a `screenshots` folder in the project root, then reference them here:
 
 ![Employee Directory Home](./screenshots/home.png)
-
 ![Employee Details](./screenshots/details.png)
-
-## Features
-
-- Fetches and validates employee data from a public API
-- Search by first name, last name, or email
-- Sort employees A-Z or Z-A
-- Pagination with 10 employees per page
-- Add and remove favorites with local storage persistence
-- Dark and light mode toggle
-- Cancellable API requests when routes or components unmount
-- Responsive layout for desktop, tablet, and mobile
-- Installable web app assets
 
 ## Technology Stack
 
-- React 18
-- React Router 6
-- Vite 5
-- Vitest for automated tests
-- DummyJSON users API
+- React 18 (functional components, hooks)
+- React Router v6 (routing, including lazy-loaded routes)
+- Vite (build tool and dev server)
+- Plain CSS with CSS variables for light/dark theming
+- Vitest + React Testing Library (automated tests)
+- Browser localStorage (favorites, added/edited/deleted employees, theme, view preference)
 
-## Requirements and Setup
+## Node.js Requirement
 
-- Node.js 18.0.0 or newer
-- npm 9 or newer recommended
+Node.js version 18 or higher is required.
 
-Install dependencies and start the development server:
+## Setup
 
-```bash
-npm install
-npm run dev
-```
-
-Create a production build or preview it locally:
-
-```bash
-npm run build
-npm run preview
-```
-
-## Deployment
-
-The Vercel deployment dashboard is available at:
-
-https://vercel.com/bit15/employee-directory/yKvX1YE6mzK7YGmFkbaADwWooJY8
+1. Install dependencies:
+   ```
+   npm install
+   ```
+2. Run the app:
+   ```
+   npm run dev
+   ```
+3. Open the URL shown in the terminal (usually http://localhost:5173)
 
 ## Testing
 
 Run the automated test suite with:
-
-```bash
+```
 npm test
 ```
+Or in watch mode while developing:
+```
+npm run test:watch
+```
+Tests cover: search filtering, department/city filtering, sorting, statistics calculation, form validation, favorite toggling, employee card rendering, pagination behavior, and error/retry handling.
 
-The current tests cover trimmed search, name/email matching, A-Z and Z-A sorting, pagination, and favorite toggling. API error and route-level UI tests are recommended as the next expansion.
+## Production Build
 
-## Project Structure
-
-```text
-src/
-  components/       Reusable cards, lists, controls, loading, and error states
-  pages/            Directory home and employee details routes
-  services/         API request functions and response validation
-  utils/            Search, sorting, pagination, and favorite helpers
-  App.jsx           Application routes and shared theme/favorites state
-  main.jsx          React entry point and service worker registration
-public/              Manifest and service worker assets
+```
+npm run build
+npm run preview
 ```
 
-## Accessibility
+## Project Folder Structure
 
-Search has an explicit label, favorite buttons announce the employee and action, images include meaningful alt text, and image dimensions are declared to reduce layout shift. The interface also keeps controls keyboard accessible through native buttons, links, inputs, and selects.
+```
+src/
+├── components/
+│   ├── Header.jsx
+│   ├── SearchBar.jsx
+│   ├── EmployeeCard.jsx
+│   ├── EmployeeList.jsx
+│   ├── EmployeeFilters.jsx
+│   ├── EmployeeForm.jsx
+│   ├── Statistics.jsx
+│   ├── Pagination.jsx
+│   ├── ConfirmationModal.jsx
+│   ├── Loader.jsx
+│   └── ErrorMessage.jsx
+│
+├── pages/
+│   ├── Home.jsx
+│   ├── EmployeeDetails.jsx
+│   ├── Favorites.jsx
+│   ├── AddEmployee.jsx
+│   └── EditEmployee.jsx
+│
+├── hooks/
+│   ├── useEmployees.js
+│   ├── useFavorites.js
+│   ├── useLocalStorage.js
+│   ├── useTheme.js
+│   └── useDebounce.js
+│
+├── services/
+│   └── api.js
+│
+├── utils/
+│   ├── csvExport.js
+│   ├── validation.js
+│   └── employeeHelpers.js
+│
+├── test/
+│   └── ... automated tests
+│
+├── App.jsx
+└── main.jsx
+```
+
+## Features
+
+- Fetches employee data with fetch + useEffect, using AbortController to cancel in-flight requests on unmount or when a new request starts
+- Debounced search (400ms) by first name, last name, and email
+- Department and city filter dropdowns, combinable with search and sorting
+- A-Z / Z-A sorting
+- Grid and list view, saved to localStorage
+- Favorite employees, saved to localStorage, with a dedicated Favorites page
+- Add, edit, and delete employees locally (saved in localStorage; the API itself is never modified)
+- Accessible confirmation modal for deletions (focus trap, Escape to close, click-outside to close, focus restoration)
+- Statistics dashboard (total employees, favorites, departments, cities, average age)
+- Pagination with Previous/Next, page numbers, and adjustable page size (5/10/20)
+- CSV export of the currently filtered employee list
+- Dark/light theme toggle, saved to localStorage
+- Loading spinner and a friendly error message with a Retry button
+- Route-level code splitting with React.lazy and Suspense
+- Responsive layout (mobile, tablet, desktop)
 
 ## Known Limitations
 
-- Employee data depends on the availability of DummyJSON and is not cached between sessions.
-- The API currently returns the full dataset; server-side pagination would be preferable for much larger directories.
-- A deployed URL and screenshots must be added for a complete deployment presentation.
+- Locally added/edited/deleted employees are stored in the browser's localStorage only; they are not persisted to a backend and will not sync across devices or browsers.
+- The dummyjson.com API only returns 208 employees; locally added employees are appended to that list for this session/browser only.
+- No authentication or authorization is implemented, since this is a front-end learning project.
+
+## Accessibility Notes
+
+- The search input has an associated label (visually hidden) and an `aria-label`.
+- Favorite buttons include an `aria-label` that names the employee and the action being performed.
+- The confirmation modal uses `role="dialog"`, `aria-modal`, traps focus while open, closes on Escape or outside click, and restores focus to the triggering element on close.
+- Form fields use `aria-invalid` and `aria-describedby` to associate validation errors with their inputs.
+- Employee images use `loading="lazy"` with explicit width/height to reduce layout shift.

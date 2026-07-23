@@ -1,38 +1,49 @@
+import { memo } from 'react'
 import { Link } from 'react-router-dom'
+import { getDepartment, getCompanyName } from '../utils/employeeHelpers'
 
-function EmployeeCard({ employee, favorite, onToggleFavorite }) {
+function EmployeeCard({ employee, isFavorite, onToggleFavorite, onDelete, view }) {
   return (
-    <div className="employee-card">
+    <div className={`employee-card ${view === 'list' ? 'list-view' : ''}`}>
       <img
         src={employee.image}
         alt={employee.firstName}
         className="avatar"
         loading="lazy"
-        width="96"
-        height="96"
+        width="80"
+        height="80"
       />
-      <h3>{employee.firstName} {employee.lastName}</h3>
-      <p className="job-title">
-        {employee.company?.name} - {employee.company?.department}
-      </p>
-      <p className="email">{employee.email}</p>
 
-      <div className="card-actions">
+      <div className="employee-info">
+        <h3>{employee.firstName} {employee.lastName}</h3>
+        <p className="job-title">
+          {getCompanyName(employee)} - {getDepartment(employee)}
+        </p>
+        <p className="email">{employee.email}</p>
+      </div>
+
+      <div className="employee-actions">
         <button
           type="button"
-          className={`favorite-btn ${favorite ? 'active' : ''}`}
+          className={`favorite-btn ${isFavorite ? 'active' : ''}`}
           onClick={() => onToggleFavorite(employee.id)}
-          aria-label={`${favorite ? 'Remove' : 'Add'} ${employee.firstName} from favorites`}
+          aria-label={`${isFavorite ? 'Remove' : 'Add'} ${employee.firstName} ${employee.lastName} from favorites`}
         >
-          {favorite ? '★ Favorite' : '☆ Favorite'}
+          {isFavorite ? '★' : '☆'}
         </button>
 
-        <Link to={`/employee/${employee.id}`}>
-          <button type="button" className="view-details-btn">View Details</button>
+        <Link to={`/employees/${employee.id}`}>
+          <button type="button">View Details</button>
         </Link>
+        <Link to={`/employees/${employee.id}/edit`}>
+          <button type="button">Edit</button>
+        </Link>
+        <button type="button" className="danger" onClick={() => onDelete(employee)}>
+          Delete
+        </button>
       </div>
     </div>
   )
 }
 
-export default EmployeeCard
+export default memo(EmployeeCard)
