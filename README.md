@@ -6,10 +6,9 @@ A React application that displays employees fetched from https://dummyjson.com/u
 
 [View Employee Directory](https://employee-directory-puce-five.vercel.app)
 
-## Screenshots
-
-![Employee Directory Home](./screenshots/home.svg)
-![Employee Details](./screenshots/details.svg)
+#SCREENSHOTS:
+<img width="1866" height="887" alt="Screenshot 2026-07-23 221421" src="https://github.com/user-attachments/assets/194edd35-f98e-4a1b-88f3-d23f71f59895" />
+<img width="1901" height="885" alt="Screenshot 2026-07-23 221535" src="https://github.com/user-attachments/assets/8917ecc2-1f56-4036-90f4-6e19a8be4f9d" />
 
 ## Technology Stack
 
